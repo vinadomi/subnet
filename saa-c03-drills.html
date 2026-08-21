@@ -6,12 +6,6 @@
 <meta name="theme-color" content="#0A161D">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Subnet — SAA-C03 drills</title>
-<meta name="description" content="Short, gamified practice rounds for the AWS Certified Solutions Architect - Associate (SAA-C03) exam.">
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icon-192.png" sizes="192x192">
-<link rel="apple-touch-icon" href="icon-180.png">
-<meta name="apple-mobile-web-app-title" content="Subnet">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -698,33 +692,24 @@ let R = null;          // active round
 let mode = "mixed";
 let memoryOnly = false;
 
-/* Progress lives in localStorage. Private-mode browsers can block it, in which
-   case the app still runs and just forgets between visits. */
-function hasStore(){
-  try{ const k="__probe"; localStorage.setItem(k,"1"); localStorage.removeItem(k); return true; }
-  catch(e){ return false; }
-}
 async function load(){
-  if(!hasStore()){ memoryOnly = true; return; }
   try{
-    const raw = localStorage.getItem(KEY);
-    if(raw) S = Object.assign(blank(), JSON.parse(raw));
-  }catch(e){ /* corrupt or first run - start clean */ }
+    const r = await window.storage.get(KEY);
+    if(r && r.value) S = Object.assign(blank(), JSON.parse(r.value));
+  }catch(e){ /* first run or storage unavailable */ }
   try{
-    const rawRound = localStorage.getItem(KEY+"_round");
-    if(rawRound) R = JSON.parse(rawRound);
-  }catch(e){ R = null; }
+    const r2 = await window.storage.get(KEY+"_round");
+    if(r2 && r2.value) R = JSON.parse(r2.value);
+  }catch(e){}
 }
 async function save(){
-  if(memoryOnly) return;
-  try{ localStorage.setItem(KEY, JSON.stringify(S)); }
+  try{ await window.storage.set(KEY, JSON.stringify(S)); }
   catch(e){ memoryOnly = true; }
 }
 async function saveRound(){
-  if(memoryOnly) return;
   try{
-    if(R) localStorage.setItem(KEY+"_round", JSON.stringify(R));
-    else localStorage.removeItem(KEY+"_round");
+    if(R) await window.storage.set(KEY+"_round", JSON.stringify(R));
+    else await window.storage.delete(KEY+"_round");
   }catch(e){}
 }
 
@@ -1045,15 +1030,11 @@ $("reset").onclick = async ()=>{
   S = blank(); R = null; await save(); await saveRound(); renderHome(); toast("Progress cleared");
 };
 
-if("serviceWorker" in navigator){
-  window.addEventListener("load", ()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
-}
-
 (async function init(){
   await load();
   renderHome();
   show("home");
-  if(memoryOnly) toast("Private browsing - progress won't be saved");
+  if(memoryOnly) toast("Progress won't persist here");
 })();
 </script>
 </body>

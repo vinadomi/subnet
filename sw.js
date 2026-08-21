@@ -1,6 +1,6 @@
 /* Subnet service worker.
    Bump CACHE when you edit index.html, otherwise phones keep serving the old copy. */
-const CACHE = "subnet-v1";
+const CACHE = "subnet-v2";
 
 const SHELL = [
   "./",
