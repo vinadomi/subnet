@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0A161D">
+<title>Subnet Cards — SAA-C03 services</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0A161D; --slab:#10242E; --slab2:#16323F;
+  --line:#23505F; --line-soft:#1A3A47;
+  --chalk:#F1F8F8; --white:#FFFFFF; --muted:#9DC0C9;
+  --signal:#6FE0AE; --signal-dim:#123a30;
+  --flag:#FF7C66; --flag-dim:#3a1c19;
+  --amber:#FFC24B; --r:14px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:var(--ink);color:var(--chalk);
+  font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased;
+  background-image:radial-gradient(circle at 1px 1px, rgba(122,180,195,.09) 1px, transparent 0);
+  background-size:22px 22px;min-height:100dvh;overscroll-behavior-y:contain;
+}
+.wrap{max-width:560px;margin:0 auto;padding:0 16px calc(28px + env(safe-area-inset-bottom))}
+h1,.display{font-family:"Bricolage Grotesque","IBM Plex Sans",sans-serif;font-weight:800;letter-spacing:-.02em;line-height:1.05;margin:0}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace}
+.eyebrow{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+:focus-visible{outline:2px solid var(--amber);outline-offset:3px;border-radius:6px}
+.hidden{display:none !important}
+
+header{padding:calc(20px + env(safe-area-inset-top)) 0 14px}
+.brandrow{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.brand{font-size:26px}
+.brand em{font-style:normal;color:var(--signal)}
+.sub{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--muted);margin-top:6px}
+
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
+.stat{background:var(--slab);border:1px solid var(--line-soft);border-radius:10px;padding:10px 11px}
+.stat .k{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.stat .v{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:22px;margin-top:2px}
+.stat .v small{font-size:12px;font-weight:600;color:var(--muted)}
+
+section{margin-top:24px}
+.sechead{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.sechead .rule{flex:1;height:1px;background:var(--line-soft)}
+
+.decks{display:flex;flex-direction:column;gap:8px}
+.deck{display:flex;align-items:center;gap:12px;width:100%;text-align:left;
+  background:var(--slab);border:1px solid var(--line-soft);border-radius:12px;padding:13px 14px;min-height:56px;
+  transition:border-color .15s ease,background .15s ease}
+.deck[aria-pressed="true"]{border-color:var(--amber);background:var(--slab2)}
+.deck .nm{flex:1;min-width:0;font-weight:600;font-size:15px}
+.deck .ct{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--muted);flex:none}
+.deck .ring{width:34px;height:34px;flex:none;position:relative}
+.deck .ring svg{transform:rotate(-90deg)}
+.deck .ring .pct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-family:"IBM Plex Mono",monospace;font-size:9.5px;color:var(--muted)}
+
+.go{width:100%;margin-top:16px;min-height:56px;border-radius:12px;background:var(--signal);color:#0A161D;
+  font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:17px;
+  display:flex;align-items:center;justify-content:center;gap:10px;transition:transform .12s ease,filter .2s ease}
+.go:active{transform:scale(.985);filter:brightness(.94)}
+.go.ghost{background:transparent;color:var(--chalk);border:1px solid var(--line);font-weight:600}
+.go.amber{background:var(--amber)}
+.go[disabled]{opacity:.4}
+
+/* ---- study screen ---- */
+.sbar{padding:calc(14px + env(safe-area-inset-top)) 0 10px}
+.smeta{display:flex;justify-content:space-between;align-items:center;font-family:"IBM Plex Mono",monospace;
+  font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:9px}
+.smeta b{color:var(--chalk);font-weight:600}
+.pbar{height:4px;background:var(--slab2);border-radius:99px;overflow:hidden}
+.pbar i{display:block;height:100%;background:var(--signal);border-radius:99px;transition:width .4s ease}
+
+.stage{perspective:1400px;margin-top:16px}
+.card{position:relative;width:100%;min-height:340px;transform-style:preserve-3d;
+  transition:transform .5s cubic-bezier(.2,.8,.25,1);cursor:pointer}
+.card.flipped{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  background:var(--slab);border:1px dashed var(--line);border-radius:16px;padding:22px;
+  display:flex;flex-direction:column}
+.face::before,.face::after{content:"";position:absolute;width:10px;height:10px;border:1.5px solid var(--line)}
+.face::before{top:-1px;left:-1px;border-right:0;border-bottom:0;border-top-left-radius:16px}
+.face::after{bottom:-1px;right:-1px;border-left:0;border-top:0;border-bottom-right-radius:16px}
+.back{transform:rotateY(180deg);border-style:solid;overflow-y:auto}
+.cat{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--muted);border:1px solid var(--line-soft);border-radius:5px;padding:3px 7px;align-self:flex-start}
+.term{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:28px;line-height:1.15;
+  letter-spacing:-.02em;color:var(--white);margin:auto 0;text-wrap:balance}
+.flipnote{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);text-align:center;margin-top:auto}
+.backterm{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:17px;color:var(--white);margin:10px 0 0}
+.def{font-size:16px;line-height:1.55;color:var(--white);margin:12px 0 0}
+.cuebox{margin-top:16px;border-top:1px dashed var(--line-soft);padding-top:13px}
+.cuelab{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--amber)}
+.cue{font-size:15px;line-height:1.55;color:var(--chalk);margin-top:6px}
+
+.grade{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:16px}
+.gbtn{min-height:54px;border-radius:12px;font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:16px;
+  display:flex;align-items:center;justify-content:center;gap:8px}
+.gbtn.again{background:var(--flag-dim);color:var(--flag);border:1px solid var(--flag)}
+.gbtn.got{background:var(--signal);color:#0A161D}
+.gbtn:active{transform:scale(.985)}
+.hintrow{margin-top:10px;text-align:center}
+.hintrow button{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--muted);text-decoration:underline}
+
+/* ---- browse ---- */
+.brow{border-bottom:1px dashed var(--line-soft);padding:13px 0}
+.brow summary{cursor:pointer;list-style:none;display:flex;gap:10px;align-items:baseline;font-weight:600;font-size:15px}
+.brow summary::-webkit-details-marker{display:none}
+.brow summary .st{flex:none;font-family:"IBM Plex Mono",monospace;font-size:11px}
+.brow .bd{margin-top:8px;font-size:14.5px;line-height:1.55;color:var(--chalk)}
+.brow .bc{margin-top:8px;font-size:14px;line-height:1.55;color:var(--muted)}
+.node{background:var(--slab);border:1px solid var(--line-soft);border-radius:var(--r);padding:4px 16px}
+
+.centered{text-align:center}
+.big{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:58px;line-height:1;letter-spacing:-.04em}
+.big span{font-size:20px;color:var(--muted)}
+.foot{margin-top:26px;font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--muted);line-height:1.6;
+  border-top:1px dashed var(--line-soft);padding-top:12px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(80px + env(safe-area-inset-bottom));
+  background:var(--chalk);color:var(--ink);border-radius:99px;padding:9px 16px;font-size:13.5px;font-weight:600;
+  z-index:20;opacity:0;transition:opacity .3s ease;pointer-events:none;max-width:88vw;text-align:center}
+.toast.show{opacity:1}
+@media (prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div id="home">
+  <header>
+    <div class="brandrow">
+      <h1 class="brand">Subnet Cards<em>.</em></h1>
+      <div class="eyebrow" id="dayStreak">—</div>
+    </div>
+    <div class="sub">SAA-C03 services &amp; concepts · 15 cards a session</div>
+  </header>
+
+  <div class="stats">
+    <div class="stat"><div class="k">Known</div><div class="v" id="sKnown">0</div></div>
+    <div class="stat"><div class="k">Learning</div><div class="v" id="sLearn">0</div></div>
+    <div class="stat"><div class="k">Untouched</div><div class="v" id="sNew">0</div></div>
+  </div>
+
+  <section>
+    <div class="sechead"><div class="eyebrow">Choose a deck</div><div class="rule"></div></div>
+    <div class="decks" id="decks"></div>
+    <button class="go" id="start">Study 15 cards →</button>
+    <button class="go ghost" id="browse" style="margin-top:9px">Browse this deck</button>
+  </section>
+
+  <div class="foot">
+    Cards cover the services and concepts named in the SAA-C03 exam guide's in-scope list.
+    Each card gives the definition plus the cue that makes it the right answer on a scenario question.<br>
+    Sessions prioritize cards you've missed. Progress saves on this device.
+    <button id="reset" style="text-decoration:underline;color:var(--muted);padding:0">Reset</button>
+  </div>
+</div>
+
+<div id="study" class="hidden">
+  <div class="sbar">
+    <div class="smeta">
+      <span>Card <b id="cNum">1</b>/<span id="cTot">15</span></span>
+      <span id="cDeck"></span>
+      <span id="cLeft"></span>
+    </div>
+    <div class="pbar"><i id="cProg" style="width:0%"></i></div>
+  </div>
+
+  <div class="stage">
+    <div class="card" id="card">
+      <div class="face front">
+        <div class="cat" id="fCat"></div>
+        <div class="term" id="fTerm"></div>
+        <div class="flipnote">Tap to reveal</div>
+      </div>
+      <div class="face back">
+        <div class="cat" id="bCat"></div>
+        <div class="backterm" id="bTerm"></div>
+        <div class="def" id="bDef"></div>
+        <div class="cuebox">
+          <div class="cuelab">On the exam</div>
+          <div class="cue" id="bCue"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="gradeRow" class="grade hidden">
+    <button class="gbtn again" id="gAgain">Again</button>
+    <button class="gbtn got" id="gGot">Got it</button>
+  </div>
+  <div class="hintrow"><button id="quit">Save &amp; exit</button></div>
+</div>
+
+<div id="done" class="hidden">
+  <header>
+    <div class="eyebrow">Session complete</div>
+    <div class="centered" style="margin-top:18px">
+      <div class="big" id="rGot">12<span>/15</span></div>
+      <div class="mono" style="margin-top:12px;font-size:12.5px;color:var(--muted)" id="rMeta"></div>
+    </div>
+  </header>
+  <section id="rAgainWrap">
+    <div class="sechead"><div class="eyebrow">Coming back around</div><div class="rule"></div></div>
+    <div class="node" id="rAgain"></div>
+  </section>
+  <button class="go" id="again">Another 15 →</button>
+  <button class="go ghost" id="backHome" style="margin-top:9px">Back to decks</button>
+</div>
+
+<div id="browseView" class="hidden">
+  <header>
+    <div class="eyebrow" id="brTitle">Browse</div>
+    <div class="sub" style="margin-top:8px">Tap any card to expand.</div>
+  </header>
+  <div class="node" id="brList" style="margin-top:14px"></div>
+  <button class="go ghost" id="brBack" style="margin-top:18px">Back to decks</button>
+</div>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* CARD DATA — c: category, t: term, d: what it is, e: exam cue */
+const CARDS = [
+/* ===== ANALYTICS ===== */
+{c:"Analytics",t:"Amazon Athena",d:"Serverless SQL queries run directly against data in S3, billed per data scanned.",e:"Ad hoc queries on S3 data with no cluster to manage. Partition and use columnar formats to cut cost."},
+{c:"Analytics",t:"AWS Data Exchange",d:"Marketplace for finding and subscribing to third-party data sets delivered into your account.",e:"The stem mentions licensing or subscribing to external data from a provider."},
+{c:"Analytics",t:"AWS Data Pipeline",d:"Older orchestration service for scheduled data movement and transformation between AWS stores.",e:"Legacy option. Step Functions or Glue workflows are usually the modern answer."},
+{c:"Analytics",t:"Amazon EMR",d:"Managed Hadoop, Spark, Hive, and Presto clusters for large-scale data processing.",e:"Big data frameworks by name, or huge batch jobs. Spot Instances on task nodes are the cost play."},
+{c:"Analytics",t:"AWS Glue",d:"Serverless ETL plus a Data Catalog that stores table definitions for other services.",e:"Serverless ETL, schema discovery via crawlers, or the catalog behind Athena and Redshift Spectrum."},
+{c:"Analytics",t:"AWS Glue DataBrew",d:"Visual, no-code data preparation with 250+ prebuilt transformations including PII masking.",e:"Clean, normalize, or mask data with the LEAST custom code. The no-code answer for data prep."},
+{c:"Analytics",t:"Amazon Kinesis Data Streams",d:"Real-time streaming with shard-based capacity and a configurable retention window.",e:"Multiple independent consumers, replay of past records, or sub-second custom processing."},
+{c:"Analytics",t:"Amazon Data Firehose",d:"Fully managed near-real-time delivery of streams to S3, Redshift, OpenSearch, and Splunk.",e:"Just land the stream somewhere with no shard management. Can convert to Parquet in flight."},
+{c:"Analytics",t:"AWS Lake Formation",d:"Builds and secures data lakes with centralized, fine-grained permissions across analytics services.",e:"Column- or row-level access control over a data lake shared by many teams."},
+{c:"Analytics",t:"Amazon MSK",d:"Managed Apache Kafka.",e:"The stem says Kafka explicitly, or an existing Kafka app is being migrated without rewriting."},
+{c:"Analytics",t:"Amazon OpenSearch Service",d:"Managed search and log analytics with dashboards, formerly Elasticsearch Service.",e:"Full-text search or interactive log exploration and visualization."},
+{c:"Analytics",t:"Amazon QuickSight",d:"Serverless business intelligence dashboards with per-session pricing.",e:"Business users need dashboards and visualizations, not raw query access."},
+{c:"Analytics",t:"Amazon Redshift",d:"Petabyte-scale columnar MPP data warehouse for analytical queries.",e:"OLAP, complex joins, and BI at scale. Never the answer for OLTP transactions."},
+
+/* ===== APPLICATION INTEGRATION ===== */
+{c:"App Integration",t:"Amazon AppFlow",d:"No-code data transfer between SaaS applications and AWS services.",e:"Move data from Salesforce, Slack, or ServiceNow into S3 or Redshift without writing integration code."},
+{c:"App Integration",t:"AWS AppSync",d:"Managed GraphQL API with real-time subscriptions and offline sync.",e:"The stem says GraphQL, or mobile clients need a single query across several data sources."},
+{c:"App Integration",t:"Amazon EventBridge",d:"Serverless event bus routing events by content-based rules, including SaaS partner events.",e:"Event-driven routing, scheduled rules, or ingesting third-party SaaS events with no polling."},
+{c:"App Integration",t:"Amazon MQ",d:"Managed ActiveMQ or RabbitMQ broker supporting industry-standard protocols.",e:"Migrating an existing message broker that needs JMS, AMQP, or MQTT. Otherwise use SQS or SNS."},
+{c:"App Integration",t:"Amazon SNS",d:"Pub/sub topics that push each message to every subscriber, including SQS queues and Lambda.",e:"Fan-out: one event, several independent consumers. Pairs with SQS as the classic pattern."},
+{c:"App Integration",t:"Amazon SQS",d:"Fully managed message queue that decouples producers from consumers and buffers bursts.",e:"Absorb spikes, decouple tiers, scale workers on queue depth. FIFO adds ordering and deduplication."},
+{c:"App Integration",t:"SQS dead-letter queue",d:"Side queue receiving messages that exceed the source queue's maxReceiveCount.",e:"Poison messages retried forever and blocking healthy work."},
+{c:"App Integration",t:"AWS Step Functions",d:"State machine orchestration with built-in retries, error catching, and execution history.",e:"Coordinating multiple Lambdas or services, especially with retry and branching requirements."},
+
+/* ===== COST MANAGEMENT ===== */
+{c:"Cost",t:"AWS Budgets",d:"Spending and usage thresholds that trigger alerts or automated actions.",e:"Alert me when a team or tag exceeds its monthly plan."},
+{c:"Cost",t:"AWS Cost and Usage Report",d:"Most granular billing data, delivered to S3 for analysis.",e:"Line-item detail for chargeback or custom analysis, usually queried with Athena."},
+{c:"Cost",t:"AWS Cost Explorer",d:"Visual analysis of past spend with forecasts and rightsizing recommendations.",e:"Explore and understand where cost is going, over roughly the past year."},
+{c:"Cost",t:"Savings Plans",d:"Hourly spend commitment for 1 or 3 years in exchange for lower rates.",e:"Compute Savings Plans flex across family, size, Region, Fargate, and Lambda. Most flexible commitment."},
+{c:"Cost",t:"Reserved Instances",d:"Capacity and rate commitment tied to instance attributes for 1 or 3 years.",e:"Steady usage on a known instance type, especially RDS, ElastiCache, and Redshift where Savings Plans don't apply."},
+{c:"Cost",t:"Spot Instances",d:"Spare capacity at a steep discount, reclaimable with a two-minute warning.",e:"Fault-tolerant, interruptible, checkpointed batch work. Never for a steady production baseline."},
+
+/* ===== COMPUTE ===== */
+{c:"Compute",t:"AWS Batch",d:"Managed batch job scheduling that provisions and scales compute automatically.",e:"Queued batch jobs with dependencies. Pairs naturally with Spot for cost."},
+{c:"Compute",t:"Amazon EC2",d:"Resizable virtual machines with full control over the operating system.",e:"Lift and shift, licensing needs, or anything requiring OS-level access."},
+{c:"Compute",t:"EC2 Auto Scaling",d:"Maintains a target number of healthy instances across AZs and scales on demand.",e:"Set health check type to ELB so application failures trigger replacement, not just EC2 status checks."},
+{c:"Compute",t:"AWS Elastic Beanstalk",d:"Platform service that deploys and manages the underlying infrastructure for your code.",e:"Developers want to deploy without touching infrastructure, but still want EC2 underneath."},
+{c:"Compute",t:"AWS Outposts",d:"AWS-managed racks running AWS services in your own data center.",e:"Low latency to on-premises systems or data residency that forbids leaving the building."},
+{c:"Compute",t:"AWS Wavelength",d:"AWS infrastructure embedded in 5G carrier networks.",e:"Single-digit millisecond latency to mobile users on a carrier network."},
+{c:"Compute",t:"VMware Cloud on AWS",d:"Runs a VMware SDDC on dedicated AWS bare-metal infrastructure.",e:"Migrate VMware workloads without re-platforming or retraining the team."},
+{c:"Compute",t:"AWS Serverless Application Repository",d:"Catalog of publishable, reusable serverless applications.",e:"Share or discover prebuilt serverless components across teams."},
+{c:"Compute",t:"Placement groups",d:"Cluster packs instances close together; spread separates them; partition isolates racks.",e:"Cluster plus EFA for tightly coupled HPC. Spread for a small number of critical instances."},
+
+/* ===== CONTAINERS ===== */
+{c:"Containers",t:"Amazon ECS",d:"AWS-native container orchestration running on EC2 or Fargate.",e:"Containers without Kubernetes complexity. Simpler than EKS when the stem doesn't say Kubernetes."},
+{c:"Containers",t:"Amazon EKS",d:"Managed Kubernetes control plane.",e:"The stem says Kubernetes, or an existing k8s workload is moving to AWS."},
+{c:"Containers",t:"Amazon ECR",d:"Managed private container registry with vulnerability scanning through Inspector.",e:"Where images live. Scanning findings come from Inspector."},
+{c:"Containers",t:"ECS Anywhere / EKS Anywhere",d:"Run ECS or EKS on your own on-premises infrastructure.",e:"Consistent container tooling across cloud and on-premises hardware."},
+{c:"Containers",t:"AWS Fargate",d:"Serverless compute for containers, billed per task vCPU and memory.",e:"No instance patching and no idle capacity charge. The idle-cost answer for containers."},
+
+/* ===== DATABASE ===== */
+{c:"Database",t:"Amazon RDS",d:"Managed relational database supporting MySQL, PostgreSQL, MariaDB, Oracle, and SQL Server.",e:"Managed OLTP where the engine is named. Multi-AZ for availability, read replicas for read scaling."},
+{c:"Database",t:"RDS Multi-AZ vs read replica",d:"Multi-AZ is a synchronous standby with automatic failover; read replicas are asynchronous and serve reads.",e:"Multi-AZ answers availability. Read replicas answer read performance. Never swap them."},
+{c:"Database",t:"Amazon Aurora",d:"AWS-built MySQL- and PostgreSQL-compatible engine with a distributed storage layer across three AZs.",e:"Higher performance and durability than RDS. Up to 15 low-lag replicas."},
+{c:"Database",t:"Aurora Serverless v2",d:"Aurora capacity that scales in fine-grained increments and down during idle periods.",e:"Unpredictable or spiky relational load, or minimizing database cost when idle."},
+{c:"Database",t:"Aurora global database",d:"Cross-Region replication at the storage layer, typically under one second of lag.",e:"Multi-Region DR for relational data with RPO in seconds and RTO around a minute."},
+{c:"Database",t:"Amazon DynamoDB",d:"Serverless key-value and document database with single-digit millisecond latency at any scale.",e:"Massive scale with key-based access. On-demand mode for unpredictable traffic."},
+{c:"Database",t:"DynamoDB global tables",d:"Multi-Region, multi-active replication of a table.",e:"Users on several continents all need local read and write latency."},
+{c:"Database",t:"DynamoDB point-in-time recovery",d:"Continuous backups allowing restore to any second in the last 35 days.",e:"Protection against accidental writes or deletes. Streams retain only 24 hours."},
+{c:"Database",t:"DynamoDB Accelerator (DAX)",d:"Write-through in-memory cache with a DynamoDB-compatible API.",e:"Microsecond reads on DynamoDB with minimal application change."},
+{c:"Database",t:"Amazon ElastiCache",d:"Managed Redis or Memcached in-memory cache.",e:"Relieve a read-heavy database, or store session state to make a fleet stateless."},
+{c:"Database",t:"Amazon DocumentDB",d:"Managed document database with MongoDB compatibility.",e:"The stem says MongoDB."},
+{c:"Database",t:"Amazon Keyspaces",d:"Managed Apache Cassandra-compatible database.",e:"The stem says Cassandra or CQL."},
+{c:"Database",t:"Amazon Neptune",d:"Managed graph database supporting Gremlin and SPARQL.",e:"Relationships, social graphs, fraud rings, recommendation networks."},
+{c:"Database",t:"Amazon QLDB",d:"Ledger database with an immutable, cryptographically verifiable transaction log.",e:"Immutable audit trail owned by one central authority, no blockchain consensus needed."},
+{c:"Database",t:"Amazon Timestream",d:"Purpose-built time series database.",e:"IoT sensor readings or operational metrics over time."},
+
+/* ===== STORAGE ===== */
+{c:"Storage",t:"Amazon S3",d:"Object storage with eleven nines of durability and virtually unlimited capacity.",e:"Static assets, data lakes, backups, logs. Not for anything needing a file system or block device."},
+{c:"Storage",t:"S3 storage classes",d:"Standard, Intelligent-Tiering, Standard-IA, One Zone-IA, Glacier Instant, Glacier Flexible, Deep Archive.",e:"Unknown access pattern means Intelligent-Tiering. Long retention with slow retrieval means Deep Archive."},
+{c:"Storage",t:"S3 lifecycle policies",d:"Rules that transition objects between classes or expire them on an age schedule.",e:"Known, predictable aging pattern. Use Intelligent-Tiering instead when the pattern is unknown."},
+{c:"Storage",t:"S3 Object Lock",d:"Write-once-read-many retention in governance or compliance mode; requires versioning.",e:"Regulatory retention where nobody, including root, may delete during the period."},
+{c:"Storage",t:"S3 Cross-Region Replication",d:"Asynchronous copy of objects to a bucket in another Region; requires versioning on the source.",e:"Regional resilience or getting data closer to a second user base."},
+{c:"Storage",t:"S3 Transfer Acceleration",d:"Uploads routed over the AWS backbone through the nearest edge location.",e:"Slow long-distance uploads. Pair with multipart upload for large files."},
+{c:"Storage",t:"Amazon EBS",d:"Block storage attached to a single EC2 instance within one Availability Zone.",e:"A persistent disk for one instance. Cannot be shared broadly, and does not span AZs."},
+{c:"Storage",t:"EBS volume types",d:"gp3 general purpose, io1/io2 provisioned IOPS, st1 throughput HDD, sc1 cold HDD.",e:"gp3 includes 3,000 IOPS baseline free of volume size. Only reach for io2 above gp3's ceiling or for latency guarantees."},
+{c:"Storage",t:"EC2 instance store",d:"NVMe storage physically attached to the host, lost on stop, hibernate, or termination.",e:"Very high IOPS at no extra cost for scratch data. Disqualified the moment persistence is required."},
+{c:"Storage",t:"Amazon EFS",d:"Elastic NFS file system, multi-AZ, mountable by many Linux instances at once.",e:"Shared POSIX file storage across a fleet. Not supported for Windows or SMB."},
+{c:"Storage",t:"Amazon FSx for Windows File Server",d:"Managed SMB file storage with NTFS permissions, Active Directory, and DFS.",e:"Windows workloads, SMB shares, or Active Directory integration."},
+{c:"Storage",t:"Amazon FSx for Lustre",d:"High-performance file system for HPC that can present an S3 bucket as a file system.",e:"HPC or machine learning needing sub-millisecond latency over data already in S3."},
+{c:"Storage",t:"Amazon FSx for NetApp ONTAP / OpenZFS",d:"Managed ONTAP and OpenZFS file systems supporting NFS, SMB, and iSCSI.",e:"Migrating an existing ONTAP or ZFS environment with its native features."},
+{c:"Storage",t:"AWS Storage Gateway",d:"Hybrid appliance presenting S3-backed storage on premises as file, volume, or tape.",e:"On-premises applications keeping local access while data lands in AWS. S3 File Gateway serves SMB and NFS."},
+{c:"Storage",t:"AWS Backup",d:"Centralized, policy-driven backup across AWS services with cross-Region and cross-account copy.",e:"Consolidate backup policies, or meet a long RTO cheaply with backup and restore."},
+{c:"Storage",t:"Amazon S3 Glacier",d:"Archive storage classes with retrieval times from milliseconds to twelve hours.",e:"Instant Retrieval for rare but immediate access. Deep Archive for cheapest long retention."},
+
+/* ===== NETWORKING ===== */
+{c:"Networking",t:"Amazon VPC",d:"Logically isolated virtual network with subnets, route tables, and gateways.",e:"Public subnet has a route to an internet gateway. Private does not, by definition."},
+{c:"Networking",t:"Security group vs network ACL",d:"Security groups are stateful and attach to resources; NACLs are stateless and attach to subnets.",e:"Reference a security group as a source to allow one tier to reach another as instances change."},
+{c:"Networking",t:"NAT gateway",d:"Managed outbound internet access for private subnets; a zonal resource.",e:"One per AZ to avoid a single point of failure and cross-AZ charges. Costs per hour and per GB."},
+{c:"Networking",t:"Gateway VPC endpoint",d:"Route-table entry giving private access to S3 and DynamoDB with no hourly or data charge.",e:"Private subnet needs S3 access with no internet path, at the lowest cost."},
+{c:"Networking",t:"Interface VPC endpoint (PrivateLink)",d:"Elastic network interface in your subnets providing private access to a service.",e:"Private access to most AWS services, or exposing your own service privately to other VPCs."},
+{c:"Networking",t:"Elastic Load Balancing",d:"ALB for HTTP layer 7, NLB for TCP/UDP layer 4, GWLB for inline appliances.",e:"ALB for path or host routing. NLB for extreme performance, static IPs, or non-HTTP protocols."},
+{c:"Networking",t:"Amazon CloudFront",d:"Global CDN caching at edge locations, with origin access control for private S3 origins.",e:"Global latency for HTTP content, or cutting S3 egress cost since origin fetches from S3 are free."},
+{c:"Networking",t:"AWS Global Accelerator",d:"Anycast static IPs routing traffic over the AWS backbone to Regional endpoints.",e:"Non-HTTP protocols, static IPs for allow-listing, or failover faster than DNS TTLs permit."},
+{c:"Networking",t:"Amazon Route 53",d:"DNS with health checks and routing policies.",e:"Failover for DR, latency for performance, geolocation for compliance, weighted for canary releases."},
+{c:"Networking",t:"AWS Direct Connect",d:"Dedicated private network link between your data center and AWS.",e:"Consistent bandwidth and lower transfer cost. Pair with a VPN as the resilient backup."},
+{c:"Networking",t:"AWS Site-to-Site VPN",d:"Encrypted IPsec tunnel over the public internet.",e:"Fast to set up and cheap, but throughput depends on the internet path."},
+{c:"Networking",t:"AWS Transit Gateway",d:"Hub connecting many VPCs and on-premises networks through a single point.",e:"Replacing a mesh of VPC peering connections at scale."},
+
+/* ===== SECURITY ===== */
+{c:"Security",t:"AWS IAM",d:"Users, groups, roles, and policies controlling who can do what.",e:"Roles for applications and cross-account access. Never long-term keys on an EC2 instance."},
+{c:"Security",t:"IAM roles for EC2 (instance profile)",d:"Temporary, automatically rotated credentials delivered through instance metadata.",e:"Any stem with hardcoded access keys on an instance. This is always the fix."},
+{c:"Security",t:"AWS Organizations and SCPs",d:"Multi-account management with service control policies capping permissions for member accounts.",e:"Guardrails that even an account administrator cannot remove. Also enables consolidated billing."},
+{c:"Security",t:"AWS Control Tower",d:"Sets up a multi-account landing zone with guardrails and an account factory.",e:"Standing up a governed multi-account environment from scratch."},
+{c:"Security",t:"AWS IAM Identity Center",d:"Central workforce sign-on across accounts, federated with an external identity provider.",e:"Employees signing in to many accounts with corporate credentials, formerly AWS SSO."},
+{c:"Security",t:"Amazon Cognito",d:"User pools authenticate app users; identity pools exchange tokens for temporary AWS credentials.",e:"Customer-facing app sign-in, including social identity providers, with per-user scoped access."},
+{c:"Security",t:"AWS Directory Service",d:"Managed Microsoft Active Directory in AWS, with connector and Simple AD options.",e:"Windows workloads, FSx, or WorkSpaces needing domain join."},
+{c:"Security",t:"AWS KMS",d:"Managed keys for encryption with policies, rotation, and CloudTrail-logged usage.",e:"Customer-controlled keys and an audit trail of key use. Required for sharing encrypted snapshots cross-account."},
+{c:"Security",t:"AWS CloudHSM",d:"Dedicated single-tenant hardware security modules under your exclusive control.",e:"FIPS 140-2 Level 3 or a regulatory requirement that AWS never hold the keys."},
+{c:"Security",t:"AWS Secrets Manager",d:"Stores secrets with built-in automatic rotation, including native RDS integration.",e:"Credentials that must rotate automatically. Parameter Store is cheaper but has no native rotation."},
+{c:"Security",t:"AWS Systems Manager Parameter Store",d:"Hierarchical storage for configuration and secrets, free for standard parameters.",e:"Config values or secrets where rotation is not required."},
+{c:"Security",t:"AWS Certificate Manager",d:"Free public TLS certificates that renew automatically.",e:"Must be in the same Region as the ALB. CloudFront requires the certificate in us-east-1."},
+{c:"Security",t:"AWS WAF",d:"Layer 7 firewall filtering HTTP requests with managed and custom rules.",e:"SQL injection, cross-site scripting, or rate limiting on CloudFront, ALB, or API Gateway."},
+{c:"Security",t:"AWS Shield",d:"Standard is free DDoS protection; Advanced adds cost protection and the response team.",e:"Advanced when the stem mentions expert support during attacks or billing spikes from attack traffic."},
+{c:"Security",t:"AWS Network Firewall",d:"Managed stateful network firewall for VPC traffic with deep packet inspection.",e:"Filtering at the network layer across a VPC, beyond what security groups and NACLs can express."},
+{c:"Security",t:"AWS Firewall Manager",d:"Central management of WAF, Shield, and firewall rules across an organization.",e:"Enforcing one security policy across many accounts."},
+{c:"Security",t:"Amazon GuardDuty",d:"Threat detection analyzing CloudTrail, VPC Flow Logs, and DNS logs with no agents.",e:"Compromised credentials, unusual API calls, crypto mining. Detects, never blocks."},
+{c:"Security",t:"Amazon Inspector",d:"Continuous vulnerability scanning of EC2 instances, ECR images, and Lambda functions.",e:"CVEs and software vulnerabilities, not account behavior."},
+{c:"Security",t:"Amazon Macie",d:"Discovers sensitive data such as PII, in Amazon S3 only.",e:"Remember the scope limit: S3 only. Data in RDS must be exported to S3 first."},
+{c:"Security",t:"Amazon Detective",d:"Analyzes and visualizes security findings to determine root cause.",e:"Investigating after GuardDuty raises a finding."},
+{c:"Security",t:"AWS Security Hub",d:"Aggregates findings from other security services against compliance standards.",e:"One dashboard across GuardDuty, Inspector, and Macie. Aggregates, does not itself scan."},
+{c:"Security",t:"AWS Audit Manager",d:"Continuously collects evidence mapped to compliance frameworks.",e:"Automating evidence collection for an audit."},
+{c:"Security",t:"AWS Artifact",d:"Self-service portal for AWS compliance reports such as SOC and PCI.",e:"The auditor is asking for AWS's own certifications."},
+{c:"Security",t:"AWS RAM",d:"Shares resources such as subnets and Transit Gateways across accounts.",e:"Sharing infrastructure between accounts without duplicating it."},
+
+/* ===== MANAGEMENT & GOVERNANCE ===== */
+{c:"Management",t:"Amazon CloudWatch",d:"Metrics, logs, alarms, and dashboards for AWS resources and applications.",e:"Monitoring and alarms. Memory and disk usage need the CloudWatch agent."},
+{c:"Management",t:"AWS CloudTrail",d:"Records API calls across the account for governance and auditing.",e:"Who did what and when. An organization trail covers every account."},
+{c:"Management",t:"AWS Config",d:"Records resource configuration history and evaluates compliance rules.",e:"Configuration drift, compliance state over time, and automated remediation."},
+{c:"Management",t:"AWS CloudFormation",d:"Infrastructure as code using declarative templates with managed stack updates.",e:"Repeatable environments, or replicating a stack into another Region for DR."},
+{c:"Management",t:"AWS Systems Manager",d:"Operational tooling including Session Manager, Patch Manager, Run Command, and Automation.",e:"Shell access with no bastion or open port 22, and fleet-wide patching."},
+{c:"Management",t:"AWS Trusted Advisor",d:"Checks across cost, performance, security, fault tolerance, and service limits.",e:"Finding idle resources or limit risks. Full checks require Business support or higher."},
+{c:"Management",t:"AWS Compute Optimizer",d:"Machine learning rightsizing recommendations for EC2, EBS, Lambda, and ECS.",e:"Which instance should this be instead. Cost cutting through rightsizing."},
+{c:"Management",t:"AWS Service Catalog",d:"Curated portfolios of approved products that users can self-provision.",e:"Letting teams deploy only pre-approved, compliant infrastructure."},
+{c:"Management",t:"AWS License Manager",d:"Tracks and enforces software license usage, including BYOL.",e:"Oracle or SQL Server licensing constraints, often with Dedicated Hosts."},
+{c:"Management",t:"AWS Personal Health Dashboard",d:"Alerts about AWS events that specifically affect your resources.",e:"Notification of scheduled maintenance or a service issue touching your account."},
+{c:"Management",t:"AWS Well-Architected Tool",d:"Self-assessment of workloads against the six pillars.",e:"Reviewing an architecture for risks against AWS best practice."},
+{c:"Management",t:"AWS Proton",d:"Managed deployment templates for container and serverless applications.",e:"Platform teams standardizing how developers deploy."},
+{c:"Management",t:"Amazon Managed Grafana / Prometheus",d:"Managed observability for dashboards and container metrics.",e:"The stem names Grafana or Prometheus, often with Kubernetes."},
+{c:"Management",t:"AWS X-Ray",d:"Distributed tracing across microservices to find latency bottlenecks.",e:"Which service in the chain is slow, or debugging a distributed request path."},
+
+/* ===== MIGRATION & TRANSFER ===== */
+{c:"Migration",t:"AWS DMS",d:"Migrates databases with minimal downtime, homogeneous or heterogeneous with SCT.",e:"Database migration where the source stays online during the move."},
+{c:"Migration",t:"AWS DataSync",d:"Accelerated agent-based transfer between on-premises storage and AWS, or between AWS services.",e:"Moving large file data sets on a schedule to S3, EFS, or FSx over a network link."},
+{c:"Migration",t:"AWS Snow Family",d:"Physical devices for offline data transfer: Snowcone, Snowball Edge, Snowmobile.",e:"Petabytes, or a network link too slow to finish the transfer in the required window."},
+{c:"Migration",t:"AWS Transfer Family",d:"Managed SFTP, FTPS, and FTP endpoints backed by S3 or EFS.",e:"Partners require SFTP and cannot change their process."},
+{c:"Migration",t:"AWS Application Migration Service",d:"Lift-and-shift replication of on-premises servers into EC2.",e:"Rehosting servers with minimal change, formerly CloudEndure."},
+{c:"Migration",t:"AWS Application Discovery Service",d:"Collects on-premises inventory, utilization, and dependency data for planning.",e:"The assessment step before a large migration."},
+{c:"Migration",t:"AWS Migration Hub",d:"Single view tracking migration progress across tools and accounts.",e:"Reporting on migration status in one place."},
+
+/* ===== SERVERLESS & FRONT END ===== */
+{c:"Serverless",t:"AWS Lambda",d:"Event-driven functions billed per request and duration, up to 15 minutes.",e:"Spiky or low-utilization workloads where idle cost should be zero."},
+{c:"Serverless",t:"Lambda provisioned concurrency",d:"Keeps execution environments initialized and ready.",e:"Cold start latency on a latency-sensitive API."},
+{c:"Serverless",t:"Amazon API Gateway",d:"Managed REST, HTTP, and WebSocket APIs with throttling, authorization, and caching.",e:"The front door for Lambda or any HTTP backend, with usage plans and rate limiting."},
+{c:"Serverless",t:"AWS Amplify",d:"Hosting and tooling for full-stack web and mobile front ends.",e:"Deploying a React or mobile front end with backend integration and CI/CD."},
+{c:"Serverless",t:"Amazon Pinpoint",d:"Targeted multichannel customer messaging via email, SMS, and push.",e:"Marketing campaigns and user engagement, not transactional service alerts."},
+{c:"Serverless",t:"AWS Device Farm",d:"Testing apps on real mobile devices in the cloud.",e:"The stem mentions testing across physical device models."},
+
+/* ===== MACHINE LEARNING & MEDIA ===== */
+{c:"ML & Media",t:"Amazon SageMaker",d:"End-to-end platform for building, training, and deploying machine learning models.",e:"Custom models. The prebuilt AI services below cover common use cases with no training."},
+{c:"ML & Media",t:"Amazon Rekognition",d:"Image and video analysis including objects, faces, and moderation.",e:"Detect what is in a picture or video, including inappropriate content."},
+{c:"ML & Media",t:"Amazon Textract",d:"Extracts text, forms, and tables from scanned documents.",e:"Reading documents. It extracts data; it cannot remove or mask it."},
+{c:"ML & Media",t:"Amazon Comprehend",d:"Natural language processing for sentiment, entities, and PII detection in text.",e:"Understanding the meaning of text, including sentiment analysis."},
+{c:"ML & Media",t:"Amazon Transcribe / Polly / Translate",d:"Speech to text, text to speech, and language translation.",e:"Transcribe listens, Polly speaks, Translate converts between languages."},
+{c:"ML & Media",t:"Amazon Lex / Kendra",d:"Lex builds conversational bots; Kendra is intelligent enterprise search.",e:"Lex for chatbots. Kendra for natural language search across internal documents."},
+{c:"ML & Media",t:"Amazon Forecast / Fraud Detector",d:"Time series forecasting and managed fraud detection models.",e:"Predicting demand, or scoring transactions for fraud without building a model."},
+{c:"ML & Media",t:"Amazon Kinesis Video Streams",d:"Ingests and stores video streams for analytics and playback.",e:"Camera or drone feeds streaming into AWS."},
+{c:"ML & Media",t:"Amazon Elastic Transcoder",d:"Media transcoding between formats.",e:"Converting video for different devices. AWS Elemental MediaConvert is the newer option."},
+
+/* ===== CONCEPTS ===== */
+{c:"Concepts",t:"Disaster recovery strategies",d:"Backup and restore, pilot light, warm standby, multi-site active-active.",e:"Match RTO and RPO to cost. Hours of RTO means backup and restore; near zero means active-active."},
+{c:"Concepts",t:"RTO vs RPO",d:"RTO is how long recovery may take; RPO is how much data loss is acceptable.",e:"RPO drives replication frequency. RTO drives how much infrastructure sits ready."},
+{c:"Concepts",t:"Well-Architected pillars",d:"Operational excellence, security, reliability, performance efficiency, cost optimization, sustainability.",e:"The stem's key word usually names the pillar being tested."},
+{c:"Concepts",t:"Shared responsibility model",d:"AWS secures the cloud; the customer secures what they put in it.",e:"Patching EC2 guests is yours. Patching RDS and the hypervisor is AWS's."},
+{c:"Concepts",t:"Loose coupling",d:"Components communicate through queues, topics, or event buses rather than direct calls.",e:"A failing or slow downstream component should never take the front end down."},
+{c:"Concepts",t:"Stateless application design",d:"Session state lives outside the instance, in ElastiCache or DynamoDB.",e:"Required before instances can scale in and out freely. Sticky sessions only postpone the problem."},
+{c:"Concepts",t:"Horizontal vs vertical scaling",d:"Add more instances, or move to a bigger instance.",e:"Exam answers strongly prefer horizontal scaling behind a load balancer."},
+{c:"Concepts",t:"Multi-AZ vs multi-Region",d:"Multi-AZ survives a data center failure; multi-Region survives a Region failure.",e:"Read the failure scenario carefully. Multi-Region is heavier and only required when the stem says Region."},
+{c:"Concepts",t:"Encryption at rest vs in transit",d:"At rest via KMS-backed service encryption; in transit via TLS.",e:"Existing unencrypted EBS volumes require snapshot, encrypted copy, restore. Encryption cannot be toggled in place."},
+{c:"Concepts",t:"Least privilege",d:"Grant only the permissions required, and prefer temporary credentials.",e:"Answers granting broad or permanent access are almost always wrong."},
+{c:"Concepts",t:"MOST cost-effective stems",d:"Find the cheapest option that still satisfies every stated requirement.",e:"The premium service usually meets the requirement too. That is the trap, not the answer."},
+{c:"Concepts",t:"LEAST operational overhead stems",d:"Prefer managed and serverless options over anything you build or schedule yourself.",e:"Custom Lambda schedulers and scripts lose to a native managed feature nearly every time."}
+];
+
+/* ---------- storage: artifact API when present, localStorage otherwise ---------- */
+const KEY = "saa_cards_v1";
+const store = (()=>{
+  const hasArtifact = typeof window !== "undefined" && window.storage && typeof window.storage.get === "function";
+  if(hasArtifact){
+    return {
+      async get(){ try{ const r = await window.storage.get(KEY); return r && r.value ? r.value : null; }catch(e){ return null; } },
+      async set(v){ try{ await window.storage.set(KEY, v); return true; }catch(e){ return false; } }
+    };
+  }
+  return {
+    async get(){ try{ return localStorage.getItem(KEY); }catch(e){ return null; } },
+    async set(v){ try{ localStorage.setItem(KEY, v); return true; }catch(e){ return false; } }
+  };
+})();
+
+const blank = () => ({box:{}, sessions:0, reviewed:0, lastDay:null, dayStreak:0});
+let S = blank();
+let deck = "All";
+let Q = null;              // active session
+let memoryOnly = false;
+
+const slug = t => t.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
+const CATS = [...new Set(CARDS.map(c=>c.c))];
+
+async function load(){
+  const raw = await store.get();
+  if(raw){ try{ S = Object.assign(blank(), JSON.parse(raw)); }catch(e){} }
+}
+async function save(){
+  const ok = await store.set(JSON.stringify(S));
+  if(!ok) memoryOnly = true;
+}
+
+function boxOf(card){ return S.box[slug(card.t)] || 0; }   // 0 new/again, 1 learning, 2 known
+function deckCards(d){ return d === "All" ? CARDS : CARDS.filter(c=>c.c === d); }
+function counts(list){
+  let k=0,l=0,n=0;
+  list.forEach(c=>{ const b=boxOf(c); if(b===2)k++; else if(b===1)l++; else n++; });
+  return {k,l,n,t:list.length};
+}
+function markDay(){
+  const today = new Date().toDateString();
+  if(S.lastDay === today) return;
+  const y = new Date(Date.now()-864e5).toDateString();
+  S.dayStreak = (S.lastDay === y) ? S.dayStreak+1 : 1;
+  S.lastDay = today;
+}
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+
+/* Leitner-ish draw: cards you've missed or never seen come first,
+   known cards only appear once the rest of the deck runs dry. */
+function buildSession(){
+  const pool = deckCards(deck);
+  const seen = pool.filter(c=>boxOf(c)===0 && S.box[slug(c.t)] !== undefined);
+  const fresh = pool.filter(c=>S.box[slug(c.t)] === undefined);
+  const learning = pool.filter(c=>boxOf(c)===1);
+  const known = pool.filter(c=>boxOf(c)===2);
+  const order = [...shuffle(seen), ...shuffle(learning), ...shuffle(fresh), ...shuffle(known)];
+  return { cards: order.slice(0,15), i:0, got:0, missed:[] };
+}
+
+const $ = id => document.getElementById(id);
+const show = v => { ["home","study","done","browseView"].forEach(x=>$(x).classList.toggle("hidden", x!==v)); window.scrollTo(0,0); };
+
+function ring(pct){
+  const r=14, c=2*Math.PI*r, off=c*(1-pct/100);
+  return `<div class="ring"><svg width="34" height="34" viewBox="0 0 34 34">
+    <circle cx="17" cy="17" r="${r}" fill="none" stroke="#16323F" stroke-width="3"></circle>
+    <circle cx="17" cy="17" r="${r}" fill="none" stroke="${pct>=80?'#6FE0AE':pct>=40?'#FFC24B':'#23505F'}"
+      stroke-width="3" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${off}"></circle>
+  </svg><div class="pct">${pct}</div></div>`;
+}
+
+function renderHome(){
+  const all = counts(CARDS);
+  $("sKnown").textContent = all.k;
+  $("sLearn").textContent = all.l;
+  $("sNew").textContent = all.n;
+  $("dayStreak").textContent = S.dayStreak>0 ? `${S.dayStreak}-day streak` : "New here";
+
+  const rows = ["All", ...CATS].map(d=>{
+    const c = counts(deckCards(d));
+    const pct = Math.round(c.k/c.t*100);
+    return `<button class="deck" data-deck="${d}" aria-pressed="${deck===d}">
+      ${ring(pct)}
+      <span class="nm">${d === "All" ? "Everything" : d}</span>
+      <span class="ct">${c.k}/${c.t}</span></button>`;
+  }).join("");
+  $("decks").innerHTML = rows;
+  $("decks").querySelectorAll(".deck").forEach(b=>b.onclick=()=>{ deck=b.dataset.deck; renderHome(); });
+
+  const c = counts(deckCards(deck));
+  $("start").textContent = `Study ${Math.min(15,c.t)} cards →`;
+}
+
+function renderCard(){
+  const card = Q.cards[Q.i];
+  $("cNum").textContent = Q.i+1;
+  $("cTot").textContent = Q.cards.length;
+  $("cDeck").textContent = deck === "All" ? "Mixed" : deck;
+  $("cLeft").textContent = boxOf(card)===2 ? "review" : boxOf(card)===1 ? "learning" : "new";
+  $("cProg").style.width = (Q.i/Q.cards.length*100)+"%";
+  $("fCat").textContent = card.c;
+  $("bCat").textContent = card.c;
+  $("fTerm").textContent = card.t;
+  $("bTerm").textContent = card.t;
+  $("bDef").textContent = card.d;
+  $("bCue").textContent = card.e;
+  $("card").classList.remove("flipped");
+  $("gradeRow").classList.add("hidden");
+  window.scrollTo(0,0);
+}
+
+function flip(){
+  const c = $("card");
+  if(c.classList.contains("flipped")) return;
+  c.classList.add("flipped");
+  setTimeout(()=>$("gradeRow").classList.remove("hidden"), 260);
+}
+
+function grade(good){
+  const card = Q.cards[Q.i];
+  const k = slug(card.t);
+  const cur = S.box[k] === undefined ? 0 : S.box[k];
+  S.box[k] = good ? Math.min(cur+1, 2) : 0;
+  S.reviewed++;
+  if(good) Q.got++; else Q.missed.push(card.t);
+  save();
+  if(Q.i === Q.cards.length-1){ finish(); return; }
+  Q.i++;
+  renderCard();
+}
+
+function finish(){
+  S.sessions++; markDay(); save();
+  $("rGot").innerHTML = `${Q.got}<span>/${Q.cards.length}</span>`;
+  const all = counts(CARDS);
+  $("rMeta").textContent = `${all.k} of ${all.t} cards known · ${S.sessions} sessions`;
+  $("rAgainWrap").classList.toggle("hidden", Q.missed.length===0);
+  $("rAgain").innerHTML = Q.missed.map(t=>{
+    const c = CARDS.find(x=>x.t===t);
+    return `<details class="brow"><summary><span class="st" style="color:var(--flag)">↻</span><span>${c.t}</span></summary>
+      <div class="bd">${c.d}</div><div class="bc">${c.e}</div></details>`;
+  }).join("");
+  Q = null;
+  show("done");
+}
+
+function renderBrowse(){
+  $("brTitle").textContent = deck === "All" ? "All cards" : deck;
+  const list = deckCards(deck);
+  $("brList").innerHTML = list.map(c=>{
+    const b = boxOf(c);
+    const mark = b===2 ? '<span class="st" style="color:var(--signal)">●</span>'
+              : b===1 ? '<span class="st" style="color:var(--amber)">◐</span>'
+                      : '<span class="st" style="color:var(--line)">○</span>';
+    return `<details class="brow"><summary>${mark}<span>${c.t}</span></summary>
+      <div class="bd">${c.d}</div><div class="bc">${c.e}</div></details>`;
+  }).join("");
+  show("browseView");
+}
+
+function toast(m){ const t=$("toast"); t.textContent=m; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),2200); }
+
+$("start").onclick = ()=>{ Q = buildSession(); if(!Q.cards.length){ toast("No cards in this deck"); return; } show("study"); renderCard(); };
+$("card").onclick = flip;
+$("gGot").onclick = ()=>grade(true);
+$("gAgain").onclick = ()=>grade(false);
+$("quit").onclick = ()=>{ Q=null; renderHome(); show("home"); };
+$("again").onclick = ()=>{ Q = buildSession(); show("study"); renderCard(); };
+$("backHome").onclick = ()=>{ renderHome(); show("home"); };
+$("browse").onclick = renderBrowse;
+$("brBack").onclick = ()=>{ renderHome(); show("home"); };
+
+let armed = false;
+$("reset").onclick = async ()=>{
+  if(!armed){ armed=true; $("reset").textContent="Tap again to erase"; setTimeout(()=>{armed=false;$("reset").textContent="Reset";},4000); return; }
+  armed=false; S = blank(); await save(); renderHome(); toast("Progress cleared");
+};
+
+document.addEventListener("keydown", e=>{
+  if($("study").classList.contains("hidden")) return;
+  if(e.code === "Space"){ e.preventDefault(); flip(); }
+  if(!$("gradeRow").classList.contains("hidden")){
+    if(e.key === "1") grade(false);
+    if(e.key === "2") grade(true);
+  }
+});
+
+(async function init(){
+  await load();
+  renderHome();
+  show("home");
+  if(memoryOnly) toast("Progress won't be saved here");
+})();
+</script>
+</body>
+</html>
